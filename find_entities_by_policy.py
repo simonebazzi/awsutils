@@ -8,6 +8,7 @@
 
 import boto3
 import argparse
+# import pprint
 
 argParser = argparse.ArgumentParser()
 argParser.add_argument("-p", "--policy", help="policy name or ARN")
@@ -23,144 +24,68 @@ iamclient = boto3.client('iam')
 stsclient = boto3.client('sts')
 accountid = stsclient.get_caller_identity()['Account']
 
-roles_list = []
-users_list = []
-groups_list = []
+# pp = pprint.PrettyPrinter(indent=2, compact=False, sort_dicts=False)
 
-marker = None
+groups = []
+users = []
+roles = []
 
-while True:
-    if marker is None:
-        response = iamclient.list_roles()
-    else:
-        response = iamclient.list_roles(Marker = marker)
-    
-    for x in response['Roles']:
-        roles_list.append(x['RoleName'])
-    
-    if response['IsTruncated'] == False:
-        break
-    else:
-        marker = response['Marker']
+try:
+    response = iamclient.list_entities_for_policy(PolicyArn = policy)
+except:
+    policy = 'arn:aws:iam::aws:policy/' + policy
+    response = iamclient.list_entities_for_policy(PolicyArn = policy)
 
-marker = None
+for x in response['PolicyGroups']:
+    groups.append(x)
+for x in response['PolicyUsers']:
+    users.append(x)
+for x in response['PolicyRoles']:
+    roles.append(x)
 
-while True:
-    if marker is None:
-        response = iamclient.list_groups()
-    else:
-        response = iamclient.list_groups(Marker = marker)
-    
-    for x in response['Groups']:
-        groups_list.append(x['GroupName'])
-    
-    if response['IsTruncated'] == False:
-        break
-    else:
-        marker = response['Marker']
+loopchecker = response['IsTruncated']
 
-marker = None
+while loopchecker is True:
 
-while True:
-    if marker is None:
-        response = iamclient.list_users()
-    else:
-        response = iamclient.list_users(Marker = marker)
-    
-    for x in response['Users']:
-        users_list.append(x['UserName'])
-    
-    if response['IsTruncated'] == False:
-        break
-    else:
-        marker = response['Marker']
+    marker = response['Marker']
 
-roles_matched = []
+    response = iamclient.list_entities_for_policy(PolicyArn = policy, Marker = marker, MaxItems = 1)
 
-for x in roles_list:
+    for x in response['PolicyGroups']:
+        groups.append(x)
+    for x in response['PolicyUsers']:
+        users.append(x)
+    for x in response['PolicyRoles']:
+        roles.append(x)
 
-    marker = None
+    loopchecker = response['IsTruncated']
 
-    while True:
-        if marker is None:
-            response = iamclient.list_attached_role_policies(RoleName = x)
-        else:
-            response = iamclient.list_attached_role_policies(RoleName = x, Marker = marker)
-        
-        for xx in response['AttachedPolicies']:
-            if xx['PolicyName'] == policy or xx['PolicyArn'] == policy:
-                roles_matched.append(x)
-        
-        if response['IsTruncated'] == False:
-            break
-        else:
-            marker = response['Marker']
+print(f"\nPolicy {policy} is currently attached to the following entities in account {accountid}.")
+print(f"\nRoles:\n")
 
-groups_matched = []
-
-for x in groups_list:
-
-    marker = None
-
-    while True:
-        if marker is None:
-            response = iamclient.list_attached_group_policies(GroupName = x)
-        else:
-            response = iamclient.list_attached_group_policies(GroupName = x, Marker = marker)
-        
-        for xx in response['AttachedPolicies']:
-            if xx['PolicyName'] == policy or xx['PolicyArn'] == policy:
-                groups_matched.append(x)
-        
-        if response['IsTruncated'] == False:
-            break
-        else:
-            marker = response['Marker']
-
-users_matched = []
-
-for x in users_list:
-
-    marker = None
-
-    while True:
-        if marker is None:
-            response = iamclient.list_attached_user_policies(UserName = x)
-        else:
-            response = iamclient.list_attached_user_policies(UserName = x, Marker = marker)
-        
-        for xx in response['AttachedPolicies']:
-            if xx['PolicyName'] == policy or xx['PolicyArn'] == policy:
-                users_matched.append(x)
-        
-        if response['IsTruncated'] == False:
-            break
-        else:
-            marker = response['Marker']
-
-print(f'\nPolicy {policy} is currently attached to the following entities in account {accountid}.')
-print(f'\nRoles:\n')
-
-if roles_matched == []:
-    print(f'\t* No match *')
+if roles == []:
+    print(f"\t* No match *")
 else:
-    for x in roles_matched:
-        print(f'\t{x}')
+    print("\t{}\t\t\t{}".format("Role ID", "Role name"))
+    for x in roles:
+        print(f"\t{x['RoleId']}\t{x['RoleName']}")
 
-print(f'\nGroups:\n')
+print(f"\nGroups:\n")
 
-if groups_matched == []:
-    print(f'\t* No match *')
+if groups == []:
+    print(f"\t* No match *")
 else:
-    for x in groups_matched:
-        print(f'\t{x}')
+    print("\t{}\t\t{}".format("Group ID", "Group name"))
+    for x in groups:
+        print(f"\t{x['GroupId']}\t{x['GroupName']}")
 
-print(f'\nUsers:\n')
+print(f"\nUsers:\n")
 
-if users_matched == []:
-    print(f'\t* No match *')
+if users == []:
+    print(f"\t* No match *")
 else:
-    for x in users_matched:
-        print(f'\t{x}')
+    print("\t{}\t\t\t{}".format("User ID", "User name"))
+    for x in users:
+        print(f"\t{x['UserId']}\t{x['UserName']}")
 
-print(f'\n')
+print(f"\n")
