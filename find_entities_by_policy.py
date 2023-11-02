@@ -2,13 +2,13 @@
 # Uses environment for authentication to AWS.
 #
 # v 1.0 2023-10-25 by Simone Bazzi.
+# v 1.1 2023-11-02 Simone Bazzi - improved code.
 
 # Arguments
 #   -p: Name or ARN of the policy
 
 import boto3
 import argparse
-# import pprint
 
 argParser = argparse.ArgumentParser()
 argParser.add_argument("-p", "--policy", help="policy name or ARN")
