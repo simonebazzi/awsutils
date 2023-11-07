@@ -22,7 +22,7 @@ response = ec2client.describe_regions()
 regions = []
 
 print(f"\n*** START ***")
-print(f"\nPlease note: at this time we only consider stacks in the following states:\n - CREATE_COMPLETE\n - UPDATE_COMPLETE\n - IMPORT_COMPLETE")
+print(f"\nPlease note: at this time we only consider stacks in the following states:\n - CREATE_COMPLETE\n - UPDATE_COMPLETE\n - IMPORT_COMPLETE\n - ROLLBACK_COMPLETE\n - UPDATE_ROLLBACK_COMPLETE\n - REVIEW_IN_PROGRESS\n - IMPORT_ROLLBACK_COMPLETE")
 
 for x in response['Regions']:
     regions.append(x['RegionName'])
@@ -43,9 +43,10 @@ for reg in regions:
 
         while True:
 
-            try: response = cfclient.list_stacks(StackStatusFilter = ['CREATE_COMPLETE', 'UPDATE_COMPLETE', 'IMPORT_COMPLETE'], NextToken = token)
-            except: response = cfclient.list_stacks(StackStatusFilter = ['CREATE_COMPLETE', 'UPDATE_COMPLETE', 'IMPORT_COMPLETE'])
-            else: break
+            try: response = cfclient.list_stacks(StackStatusFilter = ['CREATE_COMPLETE', 'UPDATE_COMPLETE', 'IMPORT_COMPLETE', 'ROLLBACK_COMPLETE', 'UPDATE_ROLLBACK_COMPLETE', 'REVIEW_IN_PROGRESS', 'IMPORT_ROLLBACK_COMPLETE'], NextToken = token)
+            except:
+                try: response = cfclient.list_stacks(StackStatusFilter = ['CREATE_COMPLETE', 'UPDATE_COMPLETE', 'IMPORT_COMPLETE', 'ROLLBACK_COMPLETE', 'UPDATE_ROLLBACK_COMPLETE', 'REVIEW_IN_PROGRESS', 'IMPORT_ROLLBACK_COMPLETE'])
+                except: break
             
             for x in response['StackSummaries']:
                 stacks.append((reg,x['StackName']))
@@ -68,9 +69,11 @@ if detect != None:
         
         cfclient = boto3.client('cloudformation')
 
-        response = cfclient.detect_stack_drift(StackName = st[1])
-            
-        driftswaitlist.append((st[0], response['StackDriftDetectionId']))
+        try:
+            response = cfclient.detect_stack_drift(StackName = st[1])
+            driftswaitlist.append((st[0], response['StackDriftDetectionId']))
+        except:
+            pass
 
     while driftswaitlist != []:
 
@@ -102,8 +105,9 @@ for st in stacks:
     while True:
 
         try: response = cfclient.describe_stack_resource_drifts(StackName = st[1], StackResourceDriftStatusFilters = ['MODIFIED', 'DELETED', 'NOT_CHECKED'], NextToken = token)
-        except: response = cfclient.describe_stack_resource_drifts(StackName = st[1], StackResourceDriftStatusFilters = ['MODIFIED', 'DELETED', 'NOT_CHECKED'])
-        else: break
+        except:
+            try: response = cfclient.describe_stack_resource_drifts(StackName = st[1], StackResourceDriftStatusFilters = ['MODIFIED', 'DELETED', 'NOT_CHECKED'])
+            except: break
         
         for x in response['StackResourceDrifts']:
             drifts.append((st[0], st[1], x['PhysicalResourceId'], x['ResourceType'], x['StackResourceDriftStatus'], x['Timestamp']))
