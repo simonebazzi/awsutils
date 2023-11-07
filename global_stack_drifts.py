@@ -56,9 +56,9 @@ for reg in regions:
     except:
         pass        
 
-print(f"\nActivating new drift detection.")
-
 if detect != None:
+
+    print(f"\nActivating new drift detection.")
 
     driftswaitlist = []
 
