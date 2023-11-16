@@ -12,5 +12,6 @@ Quick (unordered) list:
 - **jobs_stats.py**: statistics about Glue jobs run history (work in progress).
 - **month_spending_by_service.py**: last month spending (unblended) by AWS service.
 - **single_job_stats.py**: summary of execution and exit states for a Glue job in a given time frame.
-- **global_stack_drifts**: checks for drifted resources across all stacks in all regions.
-- **s3_stats**: overview about buckets in one account (size, versioning, etc.)
+- **global_stack_drifts.py**: checks for drifted resources across all stacks in all regions.
+- **s3_stats.py**: overview about buckets in one account (size, versioning, etc.)
+- **lamda_stats.py**: gives statistics about lambda functions across regions for a given account.
