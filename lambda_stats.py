@@ -43,7 +43,7 @@ for region in regions:
 
 separator = "\t"
 
-print(f"ARN{separator}Runtime{separator}Size (Bytes){separator}Timeout (S){separator}Memory (MB){separator}Package type{separator}Architecture{separator}Storage (GB)")
+print(f"ARN{separator}Runtime{separator}Size (Bytes){separator}Timeout (S){separator}Memory (MB){separator}Package type{separator}Architecture{separator}Storage (MB)")
 
 for x in lambda_list:
     print(f"{x[0]}{separator}{x[1]}{separator}{x[2]}{separator}{x[3]}{separator}{x[4]}{separator}{x[5]}{separator}{x[6]}{separator}{x[7]}")
